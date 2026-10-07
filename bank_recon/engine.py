@@ -34,6 +34,8 @@ class ReconciliationResult:
     gl: pd.DataFrame
     bank_balance: float
     gl_balance: float
+    bank_only_adjustments: float
+    duplicate_reversals: float
     bank_adjustments: float
     book_adjustments: float
     matched_variance: float
@@ -373,9 +375,14 @@ def reconcile(
 
     bank_balance = round(float(bank["amount"].sum()), 2)
     gl_balance = round(float(gl["amount"].sum()), 2)
-    bank_adjustments = round(float(
-        exception_frame.loc[exception_frame["source"] == "GL", "amount"].sum()
+    gl_exceptions = (
+        exception_frame.loc[exception_frame["source"] == "GL"]
         if not exception_frame.empty
+        else pd.DataFrame()
+    )
+    bank_adjustments = round(float(
+        gl_exceptions.loc[gl_exceptions["category"] != "Possible duplicate", "amount"].sum()
+        if not gl_exceptions.empty
         else 0.0
     ), 2)
     bank_only_adjustments = round(float(
@@ -386,7 +393,14 @@ def reconcile(
     matched_variance = round(
         float(matches["amount_variance"].sum() if not matches.empty else 0.0), 2
     )
-    book_adjustments = round(bank_only_adjustments + matched_variance, 2)
+    duplicate_reversals = round(float(
+        -gl_exceptions.loc[gl_exceptions["category"] == "Possible duplicate", "amount"].sum()
+        if not gl_exceptions.empty
+        else 0.0
+    ), 2)
+    book_adjustments = round(
+        bank_only_adjustments + duplicate_reversals + matched_variance, 2
+    )
     adjusted_bank_balance = round(bank_balance + bank_adjustments, 2)
     adjusted_book_balance = round(gl_balance + book_adjustments, 2)
     residual = round(adjusted_bank_balance - adjusted_book_balance, 2)
@@ -398,6 +412,8 @@ def reconcile(
         gl=gl.reset_index(drop=True),
         bank_balance=bank_balance,
         gl_balance=gl_balance,
+        bank_only_adjustments=bank_only_adjustments,
+        duplicate_reversals=duplicate_reversals,
         bank_adjustments=bank_adjustments,
         book_adjustments=book_adjustments,
         matched_variance=matched_variance,

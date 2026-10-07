@@ -21,8 +21,11 @@ line.
 - Classifies outstanding checks, deposits in transit, possible duplicates,
   bank fees, interest, and unidentified bank activity.
 - Produces a formal adjusted-bank versus adjusted-book control proof.
-- Exports summary, match, exception, suggested-entry, and source-data sheets to
-  Excel.
+- Exports an accountant-facing four-tab workbook: reconciled bank and GL source
+  schedules, a formal Bank Reconciliation Statement, and an Adjusted Cash Book.
+- Separates deposits in transit, outstanding payments, bank-only transactions,
+  duplicate GL reversals, and controlled amount corrections into supporting
+  schedules that tie to the reconciliation totals.
 
 ## Visual direction
 

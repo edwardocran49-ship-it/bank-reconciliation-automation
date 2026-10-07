@@ -1,7 +1,9 @@
+from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
 import pytest
+from openpyxl import load_workbook
 
 from bank_recon import ReconciliationConfig, build_excel_report, reconcile
 
@@ -31,6 +33,8 @@ def test_sample_reconciliation_proof_balances(sample_result):
     assert sample_result.adjusted_bank_balance == pytest.approx(
         sample_result.adjusted_book_balance, abs=0.005
     )
+    assert sample_result.duplicate_reversals == pytest.approx(10_230.18)
+    assert sample_result.bank_only_adjustments == pytest.approx(497.43)
 
 
 def test_sample_exposes_multiple_control_categories(sample_result):
@@ -95,3 +99,23 @@ def test_excel_report_contains_workbook_bytes(sample_result):
     report = build_excel_report(sample_result)
     assert report[:2] == b"PK"
     assert len(report) > 10_000
+
+    workbook = load_workbook(BytesIO(report), data_only=False)
+    assert workbook.sheetnames == [
+        "bank_statement_jun2026",
+        "gl_cash_extract_jun2026",
+        "Bank Reconciliation Statement",
+        "Adjusted Cash Book",
+    ]
+    reconciliation = workbook["Bank Reconciliation Statement"]
+    cash_book = workbook["Adjusted Cash Book"]
+    assert reconciliation["D8"].value == pytest.approx(254_160.85)
+    assert reconciliation["D11"].value == pytest.approx(0.0)
+    assert cash_book["D7"].value == pytest.approx(10_230.18)
+    assert cash_book["D9"].value == pytest.approx(254_160.85)
+    assert all(
+        not (isinstance(cell.value, str) and cell.value.startswith("#"))
+        for sheet in workbook.worksheets
+        for row in sheet.iter_rows()
+        for cell in row
+    )
