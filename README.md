@@ -26,6 +26,9 @@ line.
 - Separates deposits in transit, outstanding payments, bank-only transactions,
   duplicate GL reversals, and controlled amount corrections into supporting
   schedules that tie to the reconciliation totals.
+- Includes a responsive Power BI-style HTML dashboard with interactive source
+  and exception filters, a two-sided reconciliation bridge, KPI cards, trends,
+  exposure analysis, and a prioritized review queue.
 
 ## Visual direction
 
@@ -50,6 +53,14 @@ streamlit run app.py
 
 The included June 2026 sample loads automatically. Upload both CSVs from the
 sidebar to run a different reconciliation with the documented schemas.
+
+The **Power BI dashboard** tab embeds the standalone dashboard. You can also
+open `dashboard.html` directly in a browser or rebuild it after changing the
+sample data:
+
+```powershell
+python tools/build_dashboard.py
+```
 
 ## Run the tests
 

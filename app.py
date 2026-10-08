@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 from bank_recon import ReconciliationConfig, build_excel_report, reconcile
 
@@ -13,6 +14,7 @@ from bank_recon import ReconciliationConfig, build_excel_report, reconcile
 ROOT = Path(__file__).resolve().parent
 SAMPLE_BANK = ROOT / "data" / "raw" / "bank_statement_jun2026.csv"
 SAMPLE_GL = ROOT / "data" / "raw" / "gl_cash_extract_jun2026.csv"
+POWER_BI_DASHBOARD = ROOT / "dashboard.html"
 
 
 st.set_page_config(
@@ -159,9 +161,22 @@ metric_columns[3].metric(
     ),
 )
 
-overview_tab, exception_tab, match_tab, source_tab = st.tabs(
-    ["Control summary", "Exceptions", "Matched transactions", "Source data"]
+power_bi_tab, overview_tab, exception_tab, match_tab, source_tab = st.tabs(
+    ["Power BI dashboard", "Control summary", "Exceptions", "Matched transactions", "Source data"]
 )
+
+with power_bi_tab:
+    if POWER_BI_DASHBOARD.exists():
+        dashboard_html = POWER_BI_DASHBOARD.read_text(encoding="utf-8")
+        components.html(dashboard_html, height=1020, scrolling=True)
+        st.download_button(
+            "Download standalone HTML dashboard",
+            data=dashboard_html,
+            file_name="bank_reconciliation_dashboard.html",
+            mime="text/html",
+        )
+    else:
+        st.info("Build the HTML dashboard with `python tools/build_dashboard.py`.")
 
 with overview_tab:
     left, right = st.columns([1, 1])
